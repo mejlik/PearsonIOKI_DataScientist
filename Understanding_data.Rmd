@@ -1,0 +1,90 @@
+---
+title: "Understanding the data"
+author: "Emilia Pankowska"
+date: "4 listopada 2016"
+output: pdf_document
+---
+```{r, echo = FALSE, include = FALSE}
+library("dplyr")
+library("ggplot2")
+theme_set(theme_bw())
+
+```
+
+
+
+# Loading the data
+
+The "data.csv" should be in working directory.
+
+Empty strings are replaced with NA 
+```{r}
+df = read.table("data.csv", sep =",", head = TRUE, na.strings = "")
+```
+
+## Getting look at the data
+
+```{r}
+head(df)
+```
+
+```{r}
+str(df)
+```
+
+```{r}
+summary(df)
+```
+
+
+
+# Cleaning the data
+
+## Checking *strange* data
+The result of *summary* function shows that:
+
+1. there are some missing data in *country* and *avg_score* variables
+2. Variables *avg_score*, *completion* and *inv_rate* are between 0 and 1 -- there is no outlier values or typos.
+
+The values of factor variables can be listed to check if there is anything unexpected.
+
+```{r}
+apply(df[, 2:4], 2, function(x) sort(table(x)))
+```
+All values make senes. 
+There is a  
+
+## Dealing with missing data
+
+Because there is only few missing cases, it is possible to print them: 
+
+```{r}
+df[!complete.cases(df),]
+```
+
+There are two learners with missing country Checking if it's possible to get this info from data:
+```{r}
+miss_country <- unique(df[is.na(df$country), 1])
+unique(df[df$learner_id %in% miss_country,1:2 ])
+```
+
+
+Because there are only ten (of over 80K) cases with missing values, there is no point of replacing them and they can be ignored.
+
+Removing missing data:
+```{r}
+df <- df[complete.cases(df), ]
+```
+
+# Some plots
+```{r}
+ggplot(df, aes(x = completion)) + geom_histogram(binwidth = 0.05)
+ggplot(df, aes(x = avg_score)) + geom_histogram(binwidth = 0.05)
+ggplot(df, aes(x = inv_rate)) + geom_histogram(binwidth = 0.05)
+
+
+ggplot(df, aes(x = completion)) + geom_histogram(binwidth = 0.05, aes(y=..ncount..)) + facet_grid(in_course~.)
+ggplot(df, aes(x = avg_score)) + geom_histogram(binwidth = 0.05, aes(y=..ncount..)) + facet_grid(in_course~.)
+ggplot(df, aes(x = inv_rate)) + geom_histogram(binwidth = 0.05, aes(y=..ncount..)) + facet_grid(in_course~.)
+```
+
