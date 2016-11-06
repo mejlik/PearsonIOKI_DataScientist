@@ -5,22 +5,30 @@ Files in main directory:
 * data.csv - raw data
 * instructions
 * clean_data.R - script that prepare raw data to further analysis
-* clean_data.RData - clean data
+* clean_data.RData - clean data (used for analysis)
+
+## Final
+
+The final solution is in file final_presentation.pdf
 
 
-## Understanding the data
+## Additional folders
+
+Every of following folders contain three files: 
+* _draft file contains notes, test etc and its not easy to read...
+* two other files are more structured and much easier to follow, but still its just a notes..
+
+#### Understanding the data
 
 This part is about "first" look on the data. It contains: 
 * Loading the data
 * Cleaning the data
 * Basic visualization
 
-There three files:
-* understanding_data_draft.R
-* Understanding_data.Rmd
-* Understanding_data.pdf
-
-## Students
+#### Students
 
 In this part, the data are aggregate to learners. 
-It shows which country they come from, how many units they made, etc.
+The analysis is made per student.
+
+#### Unites
+Few plots made per unit.
