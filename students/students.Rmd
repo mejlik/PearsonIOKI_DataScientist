@@ -1,0 +1,78 @@
+---
+title: "Students"
+author: "Emilia Pankowska"
+date: "6 listopada 2016"
+output: 
+  pdf_document: 
+    fig_height: 3.5
+    fig_width: 5
+---
+
+The data in this file were aggregated to learner_id. The *avg_score*, *avg_completion* and *avg_inv_rate* are the mean value of *avg_score*, *completion* and *inv_rate* respectively.
+
+```{r, echo = FALSE, include = FALSE}
+library("dplyr")
+library("ggplot2")
+theme_set(theme_bw())
+
+
+load("../clean_data.RData")
+
+df_l <- df %>%
+  group_by(learner_id, country, in_course) %>%
+  summarize(no_units = n(),
+            no_reviews = sum(as.numeric(as.vector(is_review))),
+           #dist_no_units = n_distinct(unit),
+            avg_score = mean(avg_score),
+            avg_completion = mean(completion),
+            avg_inv_rate = mean(inv_rate)) %>%
+  ungroup()
+```
+
+
+## Country of origin
+
+The countries with less than 60 learners have been gathered together in 'other' group.
+
+Each bar is labeled by percentage of all students.
+
+```{r, echo = FALSE}
+cc <- sort(table(df_l$country)[table(df_l$country) >= 60], decreasing = TRUE)
+
+t = geom_text(aes(y = ((..count..)/sum(..count..)),
+                  label = scales::percent((..count..)/sum(..count..))), 
+              stat = "count", 
+              vjust = -0.25,
+              size = 2.5,
+              color = 'orange')
+
+df_l %>% 
+  mutate(country_bar = ordered( (ifelse(country %in% rownames(cc), as.character(country), 'other')),c(rownames(cc), 'other'))
+         # , country_order = ifelse(country %in% rownames(cc), cc[as.character(country)], 0 )
+         )%>%
+  # arrange(desc(country_order)) %>%       
+  ggplot(aes(x = country_bar)) + 
+  geom_bar() + 
+  labs(list(title = "Number of learners in countries", x = "country", y = "no. of learners")) + t
+```
+
+## Number of units taken by students
+Each bar is labeled by percentage of all students.
+
+```{r, echo = FALSE}
+
+  ggplot(df_l, aes(x = as.factor(no_units))) + geom_bar()+labs(list(title = "", x = "no. of units", y = "no. of learners")) +  t
+  
+
+```
+
+## Average score and the number of units taken by student
+Blue line is a linear treand.
+
+```{r, echo = FALSE }
+ggplot(df_l, aes(as.factor(no_units),avg_score)) + 
+  geom_boxplot() + 
+  geom_smooth(method = "lm", se=FALSE, color="blue", aes(group=1))+labs(list(title = "", x = "no. of units", y = "average score"))
+```
+
+
