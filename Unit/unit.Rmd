@@ -1,0 +1,43 @@
+---
+title: "per unit"
+author: "Emilia Pankowska"
+date: "6 listopada 2016"
+output: pdf_document
+---
+```{r, echo = FALSE, include = FALSE}
+library("dplyr")
+library("ggplot2")
+theme_set(theme_bw())
+
+
+load("../clean_data.RData")
+
+label_facet <- c("f" = 'study alone',
+                 "t" = 'course with teacher')
+
+```
+
+
+```{r, echo=FALSE}
+ggplot(df, aes(unit,avg_score)) + 
+  geom_boxplot() + 
+  geom_smooth(color="blue", se=FALSE, aes(group=1)) + 
+  geom_smooth(method = "lm", se=FALSE, color="green", aes(group=1)) +
+  facet_grid(in_course~., labeller = as_labeller(label_facet))
+```
+
+```{r, echo=FALSE}
+ggplot(df, aes(unit,completion)) + 
+  geom_boxplot() + 
+  geom_smooth(color="blue", se=FALSE, aes(group=1)) + 
+  geom_smooth(method = "lm", se=FALSE, color="green", aes(group=1)) +
+  facet_grid(in_course~., labeller = as_labeller(label_facet))
+```
+
+```{r, echo=FALSE}
+ggplot(df, aes(unit,inv_rate)) + 
+  geom_boxplot() + 
+  geom_smooth(color="blue", se=FALSE, aes(group=1)) + 
+  geom_smooth(method = "lm", se=FALSE, color="green", aes(group=1)) +
+  facet_grid(in_course~., labeller = as_labeller(label_facet))
+```

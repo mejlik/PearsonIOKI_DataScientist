@@ -109,7 +109,7 @@ ggplot(df, aes(x = inv_rate)) +
 
 ```{r, echo = FALSE}
 label_facet <- c("f" = 'study alone',
-                 "t" = 'study in course')
+                 "t" = 'course with teacher')
 
 ggplot(df, aes(x = completion)) + 
   geom_histogram(binwidth = 0.05, aes(y=..ncount..)) + 

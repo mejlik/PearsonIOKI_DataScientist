@@ -1,0 +1,207 @@
+---
+title: "Analysis of online workbook"
+author: "Emilia Pankowska"
+output: 
+  beamer_presentation: 
+    colortheme: orchid
+    fig_height: 5
+---
+
+## Introduction
+
+```{r, echo = FALSE, include = FALSE}
+library("dplyr")
+library("ggplot2")
+library("pander")
+library("tidyr")
+panderOptions("table.split.table", 70)
+theme_set(theme_bw())
+
+load("../clean_data.RData")
+```
+
+The dataset comes from a Pearson e-learning platform, an online workbook that is used alongside a paper textbook. The dataset contains a following information:
+
+* learner_id 
+* country
+* unit
+* in_course -- "t" if the student belongs to course taught by a teacher; "f" if study alone
+* avg_score -- average percentage score on all activities within a given unit
+* copletion -- the percentage of activities completed in a given unit, out of all activities available in that unit
+* inv_rate -- this is the extent to which a student deviates from the suggested order of activities by the pedagogy experts within a given unit. A value of zero indicates no departure from the suggested order, a value of one indicates a complete reversal of the order.
+
+
+
+## Introdaction 
+
+  
+
+```{r, echo = FALSE}
+no_students = length(unique(df$learner_id))
+no_countries = length(unique(df$country))
+table1 <- df %>% 
+  group_by(in_course) %>%
+  summarize(no_of_students = n_distinct(learner_id),
+            percentage = paste(round(no_of_students*100.0 / no_students ,2), "%", sep = ""))%>%
+  mutate(course = ifelse(in_course == 't', 'course with teacher', 'study alone')) %>%
+  arrange(desc(in_course)) %>% 
+  select (course, no_of_students, percentage)
+  
+```
+
+The dataset contains information about `r format(no_students, big.mark = " ")` students from `r format(no_countries, big.mark = " ")` counties.
+\tiny
+```{r, echo = FALSE}
+pander(format(table1, big.mark = " "))
+```
+
+
+
+## Number of units taken by students
+
+```{r, echo = FALSE}
+df_l <- df %>%
+  group_by(learner_id, country, in_course) %>%
+  summarize(no_units = n(),
+            no_reviews = sum(as.numeric(as.vector(is_review))),
+           #dist_no_units = n_distinct(unit),
+            avg_score = mean(avg_score),
+            avg_completion = mean(completion),
+            avg_inv_rate = mean(inv_rate)) %>%
+  ungroup()
+
+t = geom_text(aes(y = ((..count..)/sum(..count..)),
+                  label = scales::percent((..count..)/sum(..count..))), 
+              stat = "count", 
+              vjust = -0.25,
+              size = 4,
+              color = 'white')
+
+label_facet <- c("f" = 'study alone',
+                 "t" = 'course with teacher')
+
+ggplot(df_l, aes(x = as.factor(no_units))) + 
+  geom_bar() +
+  labs(list(title = "", x = "no. of units", y = "no. of learners")) +
+  t
+
+```
+
+## Number of units taken by students
+
+```{r, echo=FALSE}
+
+ggplot(df_l, aes(x = no_units)) + 
+  geom_histogram(binwidth = 0.5, aes(y = ..ncount..)) + 
+  facet_grid(in_course~., labeller = as_labeller(label_facet))+
+  labs(list(title = "", x = "no. of units", y = "no. of learners"))
+```
+
+\tiny
+```{r, echo=FALSE}
+
+df_l %>% mutate(u = cut(no_units,c(0,3,6,9,12,17), c("1-3","4-6", "7-9","10-12", "13-17") ))%>%
+  group_by(in_course, u) %>% 
+  summarize(no_of_students = n()) %>%
+  mutate( percent = 
+          round(ifelse(in_course == 'f', no_of_students*100.0/ table1[[2,2]], no_of_students*100.0/ table1[[1,2]] ),2)) %>%
+  select(in_course, u, percent) %>%
+  spread (u, percent) %>% pander()
+        
+```
+
+## Number of units taken by students
+It can be seen that only small percantage of self-study students took more then first three units (63% to 37%), when in other group most of the students took more than three units (36% to 65%).
+
+## Completion, average score and inv_rate  
+
+There is small (but significant) difference in mean values of Completion, average score and inv_rate within two groups: *study alone* and *course with teacher*. 
+
+Between two groups, there is small but significant difference between mean values of Completion, average score and inv_rate.
+The 'study alone' group has lower *avg_score* and *completion* but higher *inv_rate* than a 'course with teacher' group.
+
+
+## Completion
+```{r, echo = FALSE, fig.height=3, fig.width = 5}
+label_facet <- c("f" = 'study alone',
+                 "t" = 'course with teacher')
+
+ggplot(df, aes(x = completion)) + 
+  geom_histogram(binwidth = 0.05, aes(y=..ncount..)) + 
+  facet_grid(in_course~., labeller = as_labeller(label_facet)) +
+  labs(list(title = "Completion", y = "normalized no. of cases"))
+```
+
+\tiny
+```{r, echo = FALSE}
+comp <- data.frame(do.call("rbind", by(df$completion, df$in_course, function(x) round(summary(x),2 ))))
+colnames(comp) <- c("Min." ,"1st.Qu.","Median", "Mean","3rd.Qu.", "Max." )
+rownames(comp) <- c('study alone','course with teacher' )
+comp = format(comp, round = 2)
+pander(comp)
+```
+
+## Average score
+
+```{r, echo = FALSE, fig.height=3, fig.width = 5}
+ggplot(df, aes(x = avg_score)) + 
+  geom_histogram(binwidth = 0.05, aes(y=..ncount..)) + 
+  facet_grid(in_course~., labeller = as_labeller(label_facet)) +
+  labs(list(title = "Average score", y = "normalized no. of cases"))
+```
+\tiny
+```{r, echo = FALSE}
+comp <- data.frame(do.call("rbind", by(df$avg_score, df$in_course, function(x) round(summary(x),2 ))))
+colnames(comp) <- c("Min." ,"1st.Qu.","Median", "Mean","3rd.Qu.", "Max." )
+rownames(comp) <- c('study alone','course with teacher' )
+pander(comp)
+```
+
+## Inv_rate
+```{r, echo = FALSE, fig.height=3, fig.width = 5}
+ggplot(df, aes(x = inv_rate)) + 
+  geom_histogram(binwidth = 0.05, aes(y=..ncount..)) + 
+  facet_grid(in_course~., labeller = as_labeller(label_facet)) +
+  labs(list(title = "Deviation from suggested order", y = "normalized no. of cases"))
+```
+\tiny
+```{r, echo = FALSE}
+comp <- data.frame(do.call("rbind", by(df$inv_rate, df$in_course, function(x) round(summary(x),2 ))))
+colnames(comp) <- c("Min." ,"1st.Qu.","Median", "Mean","3rd.Qu.", "Max." )
+rownames(comp) <- c('study alone','course with teacher' )
+pander(comp)
+```
+
+## Analysis per unit
+
+Between units there is no big difference in *avg_score* and *inv_rate*, but the *completion* varies: between units and reviews and it decreases with further units.
+
+## Analysis per unit
+
+
+```{r, echo=FALSE, fig.height=3.5  }
+ggplot(df, aes(unit,completion)) + 
+  geom_boxplot() + 
+  geom_smooth(color="blue", se=FALSE, aes(group=1)) + 
+  geom_smooth(method = "lm", se=FALSE, color="green", aes(group=1)) +
+  facet_grid(in_course~., labeller = as_labeller(label_facet))
+```
+
+```{r, echo=FALSE, fig.height=3.5 }
+ggplot(df, aes(unit,avg_score)) + 
+  geom_boxplot() + 
+  geom_smooth(color="blue", se=FALSE, aes(group=1)) + 
+  geom_smooth(method = "lm", se=FALSE, color="green", aes(group=1)) +
+ facet_grid(in_course~., labeller = as_labeller(label_facet))
+```
+
+## Analysis per unit
+
+```{r, echo=FALSE, fig.height=3.5  }
+ggplot(df, aes(unit,inv_rate)) + 
+  geom_boxplot() + 
+  geom_smooth(color="blue", se=FALSE, aes(group=1)) + 
+  geom_smooth(method = "lm", se=FALSE, color="green", aes(group=1)) +
+  facet_grid(in_course~., labeller = as_labeller(label_facet))
+
+```
