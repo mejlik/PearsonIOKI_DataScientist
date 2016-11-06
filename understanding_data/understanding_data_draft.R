@@ -6,7 +6,7 @@ theme_set(theme_bw())
 # working directory - source file location
 # "data.csv" should be in the same directory as source file.
 
-df = read.table("data.csv", sep =",", head = TRUE, na.strings = "")
+df = read.table("../data.csv", sep =",", head = TRUE, na.strings = "")
 
 head(df)
 

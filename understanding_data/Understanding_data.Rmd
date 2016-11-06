@@ -2,11 +2,16 @@
 title: "Understanding the data"
 author: "Emilia Pankowska"
 date: "4 listopada 2016"
-output: pdf_document
+output: 
+  pdf_document: 
+    fig_height: 4
+    fig_width: 5
 ---
 ```{r, echo = FALSE, include = FALSE}
 library("dplyr")
 library("ggplot2")
+library("pander")
+panderOptions("table.split.table", 120)
 theme_set(theme_bw())
 
 ```
@@ -15,11 +20,11 @@ theme_set(theme_bw())
 
 # Loading the data
 
-The "data.csv" should be in working directory.
+It is assumed that working directory is *PearsonIOKI_DataScientist* frolder. The "data.csv" should be in working directory.
 
-Empty strings are replaced with NA 
+During loading the data empty strings are replaced with NA.
 ```{r}
-df = read.table("data.csv", sep =",", head = TRUE, na.strings = "")
+df = read.table("../data.csv", sep =",", head = TRUE, na.strings = "")
 ```
 
 ## Getting look at the data
@@ -40,30 +45,31 @@ summary(df)
 
 # Cleaning the data
 
-## Checking *strange* data
 The result of *summary* function shows that:
 
 1. there are some missing data in *country* and *avg_score* variables
-2. Variables *avg_score*, *completion* and *inv_rate* are between 0 and 1 -- there is no outlier values or typos.
+2. Variables *avg_score*, *completion* and *inv_rate* are between 0 and 1 -- so there is no outlier values or typos.
 
 The values of factor variables can be listed to check if there is anything unexpected.
 
 ```{r}
 apply(df[, 2:4], 2, function(x) sort(table(x)))
 ```
-All values make senes. 
-There is a  
+
+In the given set, there is no missing values or values that would look suspicious.
 
 ## Dealing with missing data
 
 Because there is only few missing cases, it is possible to print them: 
 
-```{r}
-df[!complete.cases(df),]
+```{r, echo = FALSE}
+df_miss <- df[!complete.cases(df),]
+rownames(df_miss) = c()
+pander(df_miss)
 ```
 
 There are two learners with missing country Checking if it's possible to get this info from data:
-```{r}
+```{r, echo = FALSE}
 miss_country <- unique(df[is.na(df$country), 1])
 unique(df[df$learner_id %in% miss_country,1:2 ])
 ```
@@ -71,20 +77,57 @@ unique(df[df$learner_id %in% miss_country,1:2 ])
 
 Because there are only ten (of over 80K) cases with missing values, there is no point of replacing them and they can be ignored.
 
-Removing missing data:
-```{r}
-df <- df[complete.cases(df), ]
+
+
+## Prepering data to analyse
+
+There is a script *clean_data.R* that contains all data manipulation needed to be done, according to preaper raw data from *data.csv* to analyse. The cleaned data.frame is saved in file *clean_data.RData*
+
+
+```{r, echo = FALSE}
+load('../clean_data.RData')
 ```
 
 # Some plots
-```{r}
-ggplot(df, aes(x = completion)) + geom_histogram(binwidth = 0.05)
-ggplot(df, aes(x = avg_score)) + geom_histogram(binwidth = 0.05)
-ggplot(df, aes(x = inv_rate)) + geom_histogram(binwidth = 0.05)
+```{r, echo = FALSE, fig.height= 3, fig.width=5}
+ggplot(df, aes(x = completion)) + 
+  geom_histogram(binwidth = 0.05) + 
+  labs(list(title = "Completion", y = "no. of cases"))
+```
 
+```{r, echo = FALSE, fig.height= 3, fig.width=5}
+ggplot(df, aes(x = avg_score)) + 
+  geom_histogram(binwidth = 0.05) + 
+  labs(list(title = "Average score", y = "no. of cases"))
+```
 
-ggplot(df, aes(x = completion)) + geom_histogram(binwidth = 0.05, aes(y=..ncount..)) + facet_grid(in_course~.)
-ggplot(df, aes(x = avg_score)) + geom_histogram(binwidth = 0.05, aes(y=..ncount..)) + facet_grid(in_course~.)
-ggplot(df, aes(x = inv_rate)) + geom_histogram(binwidth = 0.05, aes(y=..ncount..)) + facet_grid(in_course~.)
+```{r, echo = FALSE, fig.height= 3, fig.width=5}
+ggplot(df, aes(x = inv_rate)) + 
+  geom_histogram(binwidth = 0.05) + 
+  labs(list(title = "Deviation from suggested order", y = "no. of cases"))
+```
+
+```{r, echo = FALSE}
+label_facet <- c("f" = 'study alone',
+                 "t" = 'study in course')
+
+ggplot(df, aes(x = completion)) + 
+  geom_histogram(binwidth = 0.05, aes(y=..ncount..)) + 
+  facet_grid(in_course~., labeller = as_labeller(label_facet)) +
+  labs(list(title = "Completion", y = "normalized no. of cases"))
+```
+
+```{r, echo = FALSE}
+ggplot(df, aes(x = avg_score)) + 
+  geom_histogram(binwidth = 0.05, aes(y=..ncount..)) + 
+  facet_grid(in_course~., labeller = as_labeller(label_facet)) +
+  labs(list(title = "Average score", y = "normalized no. of cases"))
+```
+
+```{r, echo = FALSE}
+ggplot(df, aes(x = inv_rate)) + 
+  geom_histogram(binwidth = 0.05, aes(y=..ncount..)) + 
+  facet_grid(in_course~., labeller = as_labeller(label_facet)) +
+  labs(list(title = "Deviation from suggested order", y = "normalized no. of cases"))
 ```
 
