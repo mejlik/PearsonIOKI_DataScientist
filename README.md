@@ -7,9 +7,9 @@ Files in main directory:
 * clean_data.R - script that prepare raw data to further analysis
 * clean_data.RData - clean data (used for analysis)
 
-## Final
+## Final folder
 
-The final solution is in file final_presentation.pdf
+The file with final solution is **final_presentation.pdf**
 
 
 ## Additional folders
